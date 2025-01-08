@@ -25,14 +25,12 @@ export const AssetSchema = z
     return true;
   });
 
-export type IAsset = z.infer<typeof AssetSchema>;
-
-export class Asset implements IAsset {
+export class Asset implements z.infer<typeof AssetSchema> {
   type: AssetType;
   jettonMaster?: Address;
   currencyId?: number;
 
-  constructor(params: IAsset) {
+  constructor(params: z.input<typeof AssetSchema>) {
     const parsed = AssetSchema.parse(params);
     this.type = parsed.type;
     this.jettonMaster = parsed.jettonMaster;
