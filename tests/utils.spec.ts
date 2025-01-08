@@ -1,5 +1,5 @@
 import { beginCell } from '@ton/core';
-import { Asset } from '../src/Asset';
+import { Asset } from '../src';
 import {
   storeCoinsNested,
   parseCoinsFromNestedCell,
