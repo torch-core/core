@@ -1,24 +1,10 @@
 # core
 
-This is the SDK for core.
+Core classes and utilities for Torch Finance Stable Swap DEX.
 
-## Getting Started
-
-To start using this SDK:
+## Installation
 
 ```bash
-pnpm install
-pnpm start
-```
-
-## Testing
-
-```bash
-pnpm test
-```
-
-# Release
-
-```bash
-pnpm release
+pnpm add @ton/core @ton/ton @ton/crypto zod
+pnpm add @torch-finance/core
 ```
