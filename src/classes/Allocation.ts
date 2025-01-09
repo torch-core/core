@@ -42,7 +42,7 @@ export class Allocation implements z.infer<typeof AllocationSchema>, Marshallabl
    * @param input - A single input or an array of inputs to create allocations from.
    * @returns An array of Allocation instances.
    */
-  static createAllocations(input: z.input<typeof AllocationSchema> | z.input<typeof AllocationSchema>[]) {
+  static createAllocations(input: z.input<typeof AllocationSchema> | z.input<typeof AllocationSchema>[]): Allocation[] {
     const allocs = Array.isArray(input) ? input : [input];
     return allocs.map((alloc) => new Allocation(alloc));
   }

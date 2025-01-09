@@ -20,14 +20,15 @@ describe('Allocation', () => {
   });
 
   it('Should create allocation array', () => {
-    const allocation = Allocation.createAllocations([
+    const allocations = Allocation.createAllocations([
       { asset: ton, amount: 100n },
       { asset: tston, amount: 104n },
       { asset: stton, amount: 105n },
     ]);
-    expect(allocation.length).toEqual(3);
-    expect(allocation[0].asset).toEqual(ton);
-    expect(allocation[0].amount).toEqual(100n);
+
+    expect(allocations).toHaveLength(3); // Need to add this line to prevent from TS2532: Object is possibly 'undefined
+    expect(allocations[0]?.asset).toEqual(ton);
+    expect(allocations[0]?.amount).toEqual(100n);
   });
 
   it('Should create allocation from JSON', () => {
