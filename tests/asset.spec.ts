@@ -69,4 +69,14 @@ describe('Asset', () => {
     const transformed = Asset.fromCell(cell);
     expect(transformed.ID).toEqual(original.ID);
   });
+
+  it('Should convert asset between ID and fromID', () => {
+    const jettonMaster = Address.parse('EQC98_qAmNEptUtPc7W6xdHh_ZHrBUFpw5Ft_IzNU20QAJav');
+    const original = Asset.jetton(jettonMaster);
+    const id = original.ID;
+    const transformed = Asset.fromID(id);
+    expect(transformed.ID).toEqual(original.ID);
+    expect(transformed.type).toEqual(original.type);
+    expect(transformed.jettonMaster?.toString()).toEqual(original.jettonMaster?.toString());
+  });
 });
