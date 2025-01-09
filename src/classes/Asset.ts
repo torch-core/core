@@ -1,31 +1,36 @@
 import { beginCell, Cell } from '@ton/core';
-
 import { Address } from '@ton/core';
+import { Cellable, Comparable, Marshallable } from '../interfaces';
 import { z } from 'zod';
+import { AddressSchema } from './Address';
 
+/**
+ * Enumeration for asset types.
+ * - `TON (0)`: Represents the TON asset.
+ * - `JETTON (1)`: Represents a Jetton asset, requiring a `jettonMaster` address.
+ * - `EXTRA_CURRENCY (2)`: Represents an extra currency, requiring a `currencyId`.
+ */
 export enum AssetType {
   TON = 0,
   JETTON = 1,
   EXTRA_CURRENCY = 2,
 }
 
-export const AssetSchema = z
-  .object({
-    type: z.nativeEnum(AssetType),
-    jettonMaster: z.instanceof(Address).optional(),
-    currencyId: z.number().optional(),
-  })
-  .refine((data) => {
-    if (data.type === AssetType.JETTON) {
-      return data.jettonMaster !== undefined;
-    }
-    if (data.type === AssetType.EXTRA_CURRENCY) {
-      return data.currencyId !== undefined;
-    }
-    return true;
-  });
+/**
+ * Schema definition for the Asset class.
+ * Validates the structure and constraints of an Asset instance.
+ */
+export const AssetSchema = z.union([
+  z.object({ type: z.literal(AssetType.TON) }),
+  z.object({ type: z.literal(AssetType.JETTON), jettonMaster: AddressSchema }),
+  z.object({ type: z.literal(AssetType.EXTRA_CURRENCY), currencyId: z.number() }),
+]);
 
-export class Asset implements z.infer<typeof AssetSchema> {
+/**
+ * Class representing an asset. Supports TON, Jetton, and Extra Currency.
+ * Implements `Marshallable`, `Comparable`, and `Cellable` interfaces.
+ */
+export class Asset implements Marshallable, Comparable, Cellable {
   type: AssetType;
   jettonMaster?: Address;
   currencyId?: number;
@@ -33,8 +38,11 @@ export class Asset implements z.infer<typeof AssetSchema> {
   constructor(params: z.input<typeof AssetSchema>) {
     const parsed = AssetSchema.parse(params);
     this.type = parsed.type;
-    this.jettonMaster = parsed.jettonMaster;
-    this.currencyId = parsed.currencyId;
+    if (parsed.type === AssetType.JETTON) {
+      this.jettonMaster = parsed.jettonMaster;
+    } else if (parsed.type === AssetType.EXTRA_CURRENCY) {
+      this.currencyId = parsed.currencyId;
+    }
   }
 
   /**
@@ -49,7 +57,7 @@ export class Asset implements z.infer<typeof AssetSchema> {
    * @param jettonMaster jetton master address
    * @returns Asset instance with jetton prefix (1)
    */
-  static jetton(jettonMaster: Address): Asset {
+  static jetton(jettonMaster: z.input<typeof AddressSchema>): Asset {
     return new Asset({ type: AssetType.JETTON, jettonMaster });
   }
 
@@ -62,6 +70,22 @@ export class Asset implements z.infer<typeof AssetSchema> {
     return new Asset({ type: AssetType.EXTRA_CURRENCY, currencyId });
   }
 
+  toCell(): Cell {
+    switch (this.type) {
+      case AssetType.TON:
+        return beginCell().storeUint(this.type, 4).endCell();
+      case AssetType.JETTON:
+        return beginCell().storeUint(this.type, 4).storeAddress(this.jettonMaster).endCell();
+      case AssetType.EXTRA_CURRENCY:
+        return beginCell().storeUint(this.type, 4).storeInt(this.currencyId!, 32).endCell();
+    }
+  }
+
+  /**
+   * Deserializes a Cell object into an Asset instance.
+   * @param c - The serialized Cell object.
+   * @returns The deserialized Asset instance.
+   */
   static fromCell(c: Cell): Asset {
     const sc = c.beginParse();
     const prefix = sc.loadUint(4);
@@ -83,20 +107,8 @@ export class Asset implements z.infer<typeof AssetSchema> {
     }
   }
 
-  toCell(): Cell {
-    const cellBuilder = beginCell().storeUint(this.type, 4);
-    switch (this.type) {
-      case AssetType.TON:
-        return cellBuilder.endCell();
-      case AssetType.JETTON:
-        return cellBuilder.storeAddress(this.jettonMaster!).endCell();
-      case AssetType.EXTRA_CURRENCY:
-        return cellBuilder.storeInt(this.currencyId!, 32).endCell();
-    }
-  }
-
   /**
-   * The id of the asset.
+   * Unique identifier of the asset.
    * TON: 0
    * JETTON: '1:{jettonMaster}'
    * ExtraCurrency: '2:{currencyId}'
@@ -114,6 +126,11 @@ export class Asset implements z.infer<typeof AssetSchema> {
     }
   }
 
+  /**
+   * Compares the current asset with another asset for equality.
+   * @param other - The other Asset instance.
+   * @returns `true` if both assets are equal; otherwise, `false`.
+   */
   equals(other: Asset): boolean {
     return this.compare(other) === 0;
   }
@@ -137,7 +154,7 @@ export class Asset implements z.infer<typeof AssetSchema> {
     return 0;
   }
 
-  toJSON(): object {
+  toJSON() {
     switch (this.type) {
       case AssetType.TON:
         return { type: this.type };
@@ -149,5 +166,9 @@ export class Asset implements z.infer<typeof AssetSchema> {
       case AssetType.EXTRA_CURRENCY:
         return { type: this.type, currencyId: this.currencyId };
     }
+  }
+
+  static fromJSON(json: Record<string, unknown>): Asset {
+    return new Asset(json as z.infer<typeof AssetSchema>);
   }
 }

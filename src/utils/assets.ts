@@ -1,7 +1,7 @@
-import { beginCell, Builder, Cell } from '@ton/core';
-import { Asset } from '../Asset';
+import { beginCell, Cell } from '@ton/core';
+import { Asset } from '../classes/Asset';
 
-// Constants
+// Constant
 const MAX_ASSETS_PER_CELL = 3; // One cell can store up to 4 references: 3 for assets and 1 for recursion.
 
 /**
@@ -13,25 +13,26 @@ const MAX_ASSETS_PER_CELL = 3; // One cell can store up to 4 references: 3 for a
  * @example
  * ```typescript
  * const sortedAssets = assets.sort((a, b) => a.compare(b));
- * beginCell().store(storeSortedAssetNested(sortedAssets)).endCell();
+ * beginCell().storeRef(storeSortedAssetNested(sortedAssets)).endCell();
  * ```
  */
-export function storeSortedAssetNested(assets: Asset[]): (builder: Builder) => void {
-  return (builder: Builder) => {
-    // Take the first MAX_ASSETS_PER_CELL assets for the current cell
-    const currentAssets = assets.slice(0, MAX_ASSETS_PER_CELL);
-    const remainingAssets = assets.slice(MAX_ASSETS_PER_CELL);
+export function storeSortedAssetsNested(assets: Asset[]): Cell {
+  const builder = beginCell();
+  // Take the first MAX_ASSETS_PER_CELL assets for the current cell
+  const currentAssets = assets.slice(0, MAX_ASSETS_PER_CELL);
+  const remainingAssets = assets.slice(MAX_ASSETS_PER_CELL);
 
-    // Store the current assets into the builder
-    for (const asset of currentAssets) {
-      builder.storeRef(asset.toCell());
-    }
+  // Store the current assets into the builder
+  for (const asset of currentAssets) {
+    builder.storeRef(asset.toCell());
+  }
 
-    // Recursively store remaining assets into a nested cell
-    if (remainingAssets.length > 0) {
-      builder.storeRef(beginCell().store(storeSortedAssetNested(remainingAssets)).endCell());
-    }
-  };
+  // Recursively store remaining assets into a nested cell
+  if (remainingAssets.length > 0) {
+    builder.storeRef(storeSortedAssetsNested(remainingAssets));
+  }
+
+  return builder.endCell();
 }
 
 /**

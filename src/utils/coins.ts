@@ -1,4 +1,4 @@
-import { beginCell, Builder, Cell } from '@ton/core';
+import { beginCell, Cell } from '@ton/core';
 
 const MAX_COINS_PER_CELL = 7; // One cell can store up to 1023 bits, coin type is VarUint128, thus one cell can store up to 7 coins, and if there are more than 7 coins, the rest will be stored in a nested cell
 /**
@@ -9,26 +9,27 @@ const MAX_COINS_PER_CELL = 7; // One cell can store up to 1023 bits, coin type i
  * @example
  * ```typescript
  * const coins = [1n, 2n, 3n, 4n, 5n, 6n, 7n, 8n, 9n, 10n];
- * beginCell().store(storeCoinsNested(coins)).endCell();
+ * const nestedCoinCell = beginCell().storeRef(storeCoinsNested(coins)).endCell();
  * ```
  */
-export const storeCoinsNested = (coins: bigint[]): ((builder: Builder) => void) => {
-  return (builder: Builder) => {
-    // Take the first `maxCoinsPerCell` elements
-    const currentLayer = coins.slice(0, MAX_COINS_PER_CELL);
-    const remaining = coins.slice(MAX_COINS_PER_CELL);
+export function storeCoinsNested(coins: bigint[]): Cell {
+  const builder = beginCell();
+  // Take the first `maxCoinsPerCell` elements
+  const currentLayer = coins.slice(0, MAX_COINS_PER_CELL);
+  const remaining = coins.slice(MAX_COINS_PER_CELL);
 
-    // Store the current layer's coins in the cell
-    for (const value of currentLayer) {
-      builder.storeCoins(value);
-    }
+  // Store the current layer's coins in the cell
+  for (const value of currentLayer) {
+    builder.storeCoins(value);
+  }
 
-    // If there are more coins, store the rest in a Reference
-    if (remaining.length > 0) {
-      builder.storeRef(beginCell().store(storeCoinsNested(remaining)).endCell());
-    }
-  };
-};
+  // If there are more coins, store the rest in a Reference
+  if (remaining.length > 0) {
+    builder.storeRef(storeCoinsNested(remaining));
+  }
+
+  return builder.endCell();
+}
 
 /**
  * Parses an array of coins from a nested cell.
@@ -38,7 +39,7 @@ export const storeCoinsNested = (coins: bigint[]): ((builder: Builder) => void) 
  *
  * @example
  * ```typescript
- * const nestedCoinCell = beginCell().store(storeCoinsNested(coins)).endCell();
+ * const nestedCoinCell = beginCell().storeRef(storeCoinsNested(coins)).endCell();
  * const parsedCoins = parseCoinsFromNestedCell(nestedCoinCell);
  * expect(parsedCoins).toEqual(coins);
  * ```

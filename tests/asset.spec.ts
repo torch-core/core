@@ -2,6 +2,30 @@ import { Address, beginCell } from '@ton/core';
 import { Asset, AssetType } from '../src';
 
 describe('Asset', () => {
+  it('Should create raw address from string', () => {
+    // Use TON
+    const tonAsset = new Asset({ type: AssetType.TON });
+    // Use string
+    const jettonAsset1 = new Asset({
+      type: AssetType.JETTON,
+      jettonMaster: 'EQC98_qAmNEptUtPc7W6xdHh_ZHrBUFpw5Ft_IzNU20QAJav',
+    });
+    // Use Address
+    const jettonAsset2 = new Asset({
+      type: AssetType.JETTON,
+      jettonMaster: Address.parse('EQC98_qAmNEptUtPc7W6xdHh_ZHrBUFpw5Ft_IzNU20QAJav'),
+    });
+    // Use extra currency
+    const extraCurrencyAsset = new Asset({
+      type: AssetType.EXTRA_CURRENCY,
+      currencyId: 1,
+    });
+    expect(tonAsset.ID).toBe('0');
+    expect(jettonAsset1.ID).toBe('1:EQC98_qAmNEptUtPc7W6xdHh_ZHrBUFpw5Ft_IzNU20QAJav');
+    expect(jettonAsset2.ID).toBe('1:EQC98_qAmNEptUtPc7W6xdHh_ZHrBUFpw5Ft_IzNU20QAJav');
+    expect(extraCurrencyAsset.ID).toBe('2:1');
+  });
+
   it('Should create a TON asset', () => {
     const asset = Asset.ton();
     expect(asset).toBeDefined();
@@ -28,5 +52,21 @@ describe('Asset', () => {
     const sttonHash = BigInt(`0x${beginCell().storeAddress(stton.jettonMaster).endCell().hash().toString('hex')}`);
     expect(sttonHash).toBeLessThan(tstonHash);
     expect(sorted.map((a) => a.ID)).toEqual([ton.ID, stton.ID, tston.ID]);
+  });
+
+  it('Should convert asset between toJSON and fromJSON', () => {
+    const jettonMaster = Address.parse('EQC98_qAmNEptUtPc7W6xdHh_ZHrBUFpw5Ft_IzNU20QAJav');
+    const original = Asset.jetton(jettonMaster);
+    const json = original.toJSON();
+    const transformed = Asset.fromJSON(json);
+    expect(transformed.ID).toEqual(original.ID);
+  });
+
+  it('Should convert asset between toCell and fromCell', () => {
+    const jettonMaster = Address.parse('EQC98_qAmNEptUtPc7W6xdHh_ZHrBUFpw5Ft_IzNU20QAJav');
+    const original = Asset.jetton(jettonMaster);
+    const cell = original.toCell();
+    const transformed = Asset.fromCell(cell);
+    expect(transformed.ID).toEqual(original.ID);
   });
 });
