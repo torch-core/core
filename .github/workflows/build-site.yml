@@ -1,5 +1,8 @@
 name: Build Site
 on:
+  push:
+    branches:
+      - main
   release:
     types: [published]
 
@@ -7,6 +10,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
     name: Build Site
+    permissions:
+      contents: write
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
