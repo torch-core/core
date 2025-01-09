@@ -1,5 +1,5 @@
 ---
-'core': major
+'@torch-finance/core': major
 ---
 
 Enhance project structure with new classes and CI workflow
