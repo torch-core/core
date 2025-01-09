@@ -1,5 +1,13 @@
 # @torch-finance/core
 
+## 1.1.1
+
+### Patch Changes
+
+- 5a67643: Update package.json to include additional files in the distribution
+
+  - Added "files" field to package.json to specify included files: dist, README.md, CHANGELOG.md, and LICENSE, ensuring proper packaging for distribution.
+
 ## 1.1.0
 
 ### Minor Changes
