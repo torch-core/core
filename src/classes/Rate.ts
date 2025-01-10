@@ -165,7 +165,7 @@ export class SignedRate implements Marshallable, Cellable {
 
   toJSON(): Record<string, unknown> {
     return {
-      signature: this.signature,
+      signature: this.signature.toString('hex'),
       payload: this.payload.toJSON(),
       nextSignedRate: this.nextSignedRate?.toJSON(),
     };
@@ -173,7 +173,7 @@ export class SignedRate implements Marshallable, Cellable {
 
   static fromJSON(json: Record<string, unknown>): SignedRate {
     return new SignedRate({
-      signature: json.signature as Buffer,
+      signature: Buffer.from(json.signature as string, 'hex'),
       payload: RatePayload.fromJSON(json.payload as Record<string, unknown>),
       nextSignedRate: json.nextSignedRate
         ? SignedRate.fromJSON(json.nextSignedRate as Record<string, unknown>)
