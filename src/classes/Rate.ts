@@ -12,8 +12,40 @@ import { sign } from '@ton/crypto';
 
 /**
  * Schema for validating the RatePayload structure.
- * - `expiration`: A positive number indicating the expiration time.
- * - `rates`: An array of `Allocation` objects or valid `AllocationSchema` entries, means relative prices between assets.
+ *
+ * This schema ensures the `RatePayload` object contains:
+ * - `expiration`: A positive number indicating the expiration time. (uint32)
+ * - `rates`: An array of `Allocation` objects or valid `AllocationSchema` entries,
+ *   representing relative prices between assets.
+ *
+ * ### Examples:
+ *
+ * Using Allocation.createAllocations:
+ * @example
+ * const ratePayload = {
+ *   expiration: 3600,
+ *   rates: Allocation.createAllocations([
+ *     { asset: Asset.ton(), amount: 100n },
+ *     { asset: Asset.jetton(Address.parse("EQC6...validAddress")), amount: 200n },
+ *   ]),
+ * };
+ *
+ * Using AllocationSchema entries:
+ * @example
+ * const ratePayload = {
+ *   expiration: 3600,
+ *   rates: [
+ *     { asset: Asset.ton(), amount: "100" },
+ *     { asset: Asset.extraCurrency(123), amount: 2000 },
+ *   ],
+ * };
+ *
+ * ### Equivalent TypeScript Interface:
+ * @example
+ * export interface RatePayload {
+ *   expiration: number; // Positive number representing the expiration time.
+ *   rates: Allocation[]; // Array of Allocation instances.
+ * }
  */
 export const RatePayloadSchema = z.object({
   expiration: z.number().positive(),
@@ -40,11 +72,26 @@ export class RatePayload implements z.infer<typeof RatePayloadSchema>, Marshalla
    * Signs the payload using the provided secret key.
    * @param secretKey - The secret key to sign the payload.
    * @returns A promise resolving to the signature buffer.
+   *
+   * @example
+   * const mnemonic = await mnemonicNew();
+   * const keypair = await mnemonicToWalletKey(mnemonic);
+   * const tritonRates = Allocation.createAllocations([ // Just an example
+   *   { asset: Asset.ton(), amount: 1000000000000000000n },
+   *   { asset: Asset.jetton("tston address"), amount: 1040000000000000000n },
+   * ])
+   * const ratePayload = new RatePayload({ expiration, rates: tritonRates });
+   * const signature = await ratePayload.sign(keypair.secretKey);
+   * expect(signature).toBeDefined()
    */
   async sign(secretKey: Buffer<ArrayBufferLike>): Promise<Buffer> {
     return sign(this.toCell().toBoc(), secretKey);
   }
 
+  /**
+   * Serializes the current RatePayload instance to a Cell object.
+   * @returns The serialized Cell object.
+   */
   toCell(): Cell {
     const assets = this.rates.map((rate) => rate.asset);
     const values = this.rates.map((rate) => rate.amount);
@@ -83,6 +130,10 @@ export class RatePayload implements z.infer<typeof RatePayloadSchema>, Marshalla
     return new RatePayload({ expiration, rates });
   }
 
+  /**
+   * Serializes the current RatePayload instance to a JSON object.
+   * @returns The serialized JSON object.
+   */
   toJSON(): Record<string, unknown> {
     return {
       expiration: this.expiration,
@@ -90,6 +141,11 @@ export class RatePayload implements z.infer<typeof RatePayloadSchema>, Marshalla
     };
   }
 
+  /**
+   * Deserializes a JSON object into a RatePayload instance.
+   * @param json - The serialized JSON object.
+   * @returns The deserialized RatePayload instance.
+   */
   static fromJSON(json: Record<string, unknown>): RatePayload {
     return new RatePayload(json as never);
   }
@@ -116,6 +172,25 @@ export class SignedRate implements Marshallable, Cellable {
    * @param secretKey - The secret key for signing each RatePayload.
    * @returns A promise resolving to the first SignedRate in the chain.
    * @throws If the `rates` array is empty.
+   *
+   * @example
+   * const mnemonic = await mnemonicNew();
+   * const keypair = await mnemonicToWalletKey(mnemonic);
+   * // first we create the rates, the transaction order is triton, then meta.
+   * const tritonRates = Allocation.createAllocations([
+   *   { asset: Asset.ton(), amount: 1000000000000000000n },
+   *   { asset: Asset.jetton("tston address"), amount: 1040000000000000000n },
+   *   { asset: Asset.jetton("stton address"), amount: 1050000000000000000n },
+   * ])
+   * const metaRates = Allocation.createAllocations([
+   *   { asset: Asset.ton(), amount: 100n },
+   *   { asset: hton, amount: 106n },
+   * ])
+   * const tritonRatePayload = new RatePayload({ expiration, rates: tritonRates });
+   * const metaRatePayload = new RatePayload({ expiration, rates: metaRates });
+   * // Recursively create the signed rates
+   * const signedRate = await SignedRate.fromRates([tritonRatePayload, metaRatePayload], keypair.secretKey);
+   * expect(signedRate).toBeDefined()
    */
   static async fromRates(rates: RatePayload[], secretKey: Buffer<ArrayBufferLike>): Promise<SignedRate> {
     if (rates.length === 0) {
@@ -143,6 +218,11 @@ export class SignedRate implements Marshallable, Cellable {
     return prevSignedRate as SignedRate;
   }
 
+  /**
+   * Deserializes a Cell object into a SignedRate instance.
+   * @param c - The serialized Cell object.
+   * @returns The deserialized SignedRate instance.
+   */
   static fromCell(c: Cell): SignedRate {
     const cs = c.beginParse();
     const signature = cs.loadBuffer(64);
@@ -155,6 +235,10 @@ export class SignedRate implements Marshallable, Cellable {
     return new SignedRate({ signature, payload, nextSignedRate });
   }
 
+  /**
+   * Serializes the current SignedRate instance to a Cell object.
+   * @returns The serialized Cell object.
+   */
   toCell(): Cell {
     return beginCell()
       .storeBuffer(this.signature, 64)
@@ -163,6 +247,10 @@ export class SignedRate implements Marshallable, Cellable {
       .endCell();
   }
 
+  /**
+   * Serializes the current SignedRate instance to a JSON object.
+   * @returns The serialized JSON object.
+   */
   toJSON(): Record<string, unknown> {
     return {
       signature: this.signature.toString('hex'),
@@ -171,6 +259,11 @@ export class SignedRate implements Marshallable, Cellable {
     };
   }
 
+  /**
+   * Deserializes a JSON object into a SignedRate instance.
+   * @param json - The serialized JSON object.
+   * @returns The deserialized SignedRate instance.
+   */
   static fromJSON(json: Record<string, unknown>): SignedRate {
     return new SignedRate({
       signature: Buffer.from(json.signature as string, 'hex'),

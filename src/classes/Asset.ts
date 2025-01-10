@@ -19,8 +19,42 @@ export enum AssetType {
 /**
  * Schema definition for the Asset class.
  * Validates the structure and constraints of an Asset instance.
+ *
+ * The schema uses a discriminated union based on the `type` property.
+ * Depending on the value of `type`, the structure of the object changes:
+ *
+ * - `AssetType.TON`: Represents a TON asset with no additional fields.
+ * - `AssetType.JETTON`: Represents a Jetton asset with a `jettonMaster` address.
+ * - `AssetType.EXTRA_CURRENCY`: Represents an extra currency asset with a `currencyId`.
+ *
+ * ### Examples:
+ *
+ * TON Asset:
+ * @example
+ * const tonAsset = { type: AssetType.TON };
+ *
+ * Jetton Asset:
+ * @example
+ * const jettonAsset = {
+ *   type: AssetType.JETTON,
+ *   jettonMaster: "EQC6...validAddress",
+ * };
+ *
+ * Extra Currency Asset:
+ * @example
+ * const extraCurrencyAsset = {
+ *   type: AssetType.EXTRA_CURRENCY,
+ *   currencyId: 123,
+ * };
+ *
+ * ### Equivalent TypeScript Interface:
+ * @example
+ * export type Asset =
+ *   | { type: AssetType.TON }
+ *   | { type: AssetType.JETTON; jettonMaster: string }
+ *   | { type: AssetType.EXTRA_CURRENCY; currencyId: number };
  */
-export const AssetSchema = z.union([
+export const AssetSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal(AssetType.TON) }),
   z.object({ type: z.literal(AssetType.JETTON), jettonMaster: AddressSchema }),
   z.object({ type: z.literal(AssetType.EXTRA_CURRENCY), currencyId: z.number() }),
@@ -29,6 +63,11 @@ export const AssetSchema = z.union([
 /**
  * Class representing an asset. Supports TON, Jetton, and Extra Currency.
  * Implements `Marshallable`, `Comparable`, and `Cellable` interfaces.
+ *
+ * @example
+ * const tonAsset = Asset.ton()
+ * const jettonAsset = Asset.jetton("EQC6...validAddress")
+ * const jettonAsset = Asset.jetton(Address.parse("EQC6...validAddress"))
  */
 export class Asset implements Marshallable, Comparable, Cellable {
   type: AssetType;
@@ -70,6 +109,10 @@ export class Asset implements Marshallable, Comparable, Cellable {
     return new Asset({ type: AssetType.EXTRA_CURRENCY, currencyId });
   }
 
+  /**
+   * Serializes the current asset to a Cell object.
+   * @returns The serialized Cell object.
+   */
   toCell(): Cell {
     switch (this.type) {
       case AssetType.TON:
@@ -112,6 +155,11 @@ export class Asset implements Marshallable, Comparable, Cellable {
    * TON: 0
    * JETTON: '1:{jettonMaster}'
    * ExtraCurrency: '2:{currencyId}'
+   *
+   * @example
+   * expect(Asset.ton().ID).toBe('0')
+   * expect(Asset.jetton(Address.parse("EQC6...validAddress")).ID).toBe('1:EQC6...validAddress')
+   * expect(Asset.extraCurrency(123).ID).toBe('2:123')
    */
   get ID(): string {
     switch (this.type) {
@@ -126,6 +174,16 @@ export class Asset implements Marshallable, Comparable, Cellable {
     }
   }
 
+  /**
+   * Deserializes an asset ID string into an Asset instance.
+   * @param id - The asset ID string.
+   * @returns The deserialized Asset instance.
+   *
+   * @example
+   * const asset = Asset.fromID('1:EQC6...validAddress')
+   * expect(asset.type).toBe(AssetType.JETTON)
+   * expect(asset.jettonMaster).toBe(Address.parse("EQC6...validAddress"))
+   */
   static fromID(id: string): Asset {
     const [type, value] = id.split(':', 2);
     if (!type || !value) throw new Error('Invalid asset ID');
@@ -151,6 +209,18 @@ export class Asset implements Marshallable, Comparable, Cellable {
     return this.compare(other) === 0;
   }
 
+  /**
+   * Compares the current asset with another asset for ordering, i.e.
+   * - 0: equal
+   * - 1: this is greater than other
+   * - -1: this is less than other
+   * @param other - The other Asset instance.
+   * @returns A number indicating the comparison result.
+   *
+   * @example
+   * assets = [Asset.ton(), Asset.jetton(Address.parse("EQC6...validAddress")), Asset.extraCurrency(123)]
+   * assets.sort((a, b) => a.compare(b))
+   */
   compare(other: Asset): number {
     if (other.type != this.type) {
       return this.type - other.type;
@@ -170,7 +240,24 @@ export class Asset implements Marshallable, Comparable, Cellable {
     return 0;
   }
 
-  toJSON() {
+  /**
+   * Serializes the current asset to a JSON object.
+   * @returns A JSON object representing the asset.
+   *
+   * @example
+   * const asset = Asset.ton()
+   * const json = asset.toJSON()
+   * expect(json).toEqual({ type: 0 })
+   *
+   * const jettonAsset = Asset.jetton(Address.parse("EQC6...validAddress"))
+   * const json = jettonAsset.toJSON()
+   * expect(json).toEqual({ type: 1, jettonMaster: "EQC6...validAddress" })
+   *
+   * const extraCurrencyAsset = Asset.extraCurrency(123)
+   * const json = extraCurrencyAsset.toJSON()
+   * expect(json).toEqual({ type: 2, currencyId: 123 })
+   */
+  toJSON(): Record<string, unknown> {
     switch (this.type) {
       case AssetType.TON:
         return { type: this.type };
@@ -184,6 +271,16 @@ export class Asset implements Marshallable, Comparable, Cellable {
     }
   }
 
+  /**
+   * Deserializes a JSON object into an Asset instance.
+   * @param json - The JSON object.
+   * @returns The deserialized Asset instance.
+   *
+   * @example
+   * const asset = Asset.fromJSON({ type: 1, jettonMaster: "EQC6...validAddress" })
+   * expect(asset.type).toBe(AssetType.JETTON)
+   * expect(asset.jettonMaster).toBe(Address.parse("EQC6...validAddress"))
+   */
   static fromJSON(json: Record<string, unknown>): Asset {
     return new Asset(json as z.infer<typeof AssetSchema>);
   }
