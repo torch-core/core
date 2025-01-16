@@ -13,6 +13,6 @@ export function normalize(alloc: Allocation | Allocation[], target: Asset[]): Al
   const allocs = Array.isArray(alloc) ? alloc : [alloc];
   const allocMap = new Map(allocs.map((alloc) => [alloc.asset.ID, alloc]));
   return target.map((asset) => {
-    return allocMap.get(asset.ID) ?? new Allocation({ asset, amount: BigInt(0) });
+    return allocMap.get(asset.ID) ?? new Allocation({ asset, value: BigInt(0) });
   });
 }

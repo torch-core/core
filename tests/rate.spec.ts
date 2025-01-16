@@ -10,13 +10,13 @@ describe('RatePayload and SignedRate', () => {
   const stton = Asset.jetton(Address.parse('EQDNhy-nxYFgUqzfUzImBEP67JqsyMIcyk2S5_RwNNEYku0k'));
   const hton = Asset.jetton(Address.parse('EQDPdq8xjAhytYqfGSX8KcFWIReCufsB9Wdg0pLlYSO_h76w'));
   const tritonRates = Allocation.createAllocations([
-    { asset: Asset.ton(), amount: 100n },
-    { asset: tston, amount: 104n },
-    { asset: stton, amount: 105n },
+    { asset: Asset.ton(), value: 100n },
+    { asset: tston, value: 104n },
+    { asset: stton, value: 105n },
   ]);
   const metaRates = Allocation.createAllocations([
-    { asset: Asset.ton(), amount: 100n },
-    { asset: hton, amount: 106n },
+    { asset: Asset.ton(), value: 100n },
+    { asset: hton, value: 106n },
   ]);
 
   it('Should convert JSON between RatePayload', () => {

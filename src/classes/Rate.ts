@@ -94,7 +94,7 @@ export class RatePayload implements z.infer<typeof RatePayloadSchema>, Marshalla
    */
   toCell(): Cell {
     const assets = this.rates.map((rate) => rate.asset);
-    const values = this.rates.map((rate) => rate.amount);
+    const values = this.rates.map((rate) => rate.value);
 
     return beginCell()
       .storeUint(this.expiration, 32)
@@ -120,11 +120,11 @@ export class RatePayload implements z.infer<typeof RatePayloadSchema>, Marshalla
     }
 
     const rates = assets.map((asset, index) => {
-      const amount = values[index];
-      if (amount === undefined) {
+      const value = values[index];
+      if (value === undefined) {
         throw new Error(`Missing value for asset at index ${index}`);
       }
-      return new Allocation({ asset, amount });
+      return new Allocation({ asset, value });
     });
 
     return new RatePayload({ expiration, rates });

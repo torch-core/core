@@ -10,7 +10,7 @@ import { Comparable, Marshallable } from '../interfaces';
  * - `asset`:
  *   - Can be an instance of the `Asset` class.
  *   - Can be an object conforming to `AssetSchema`, which is transformed into an `Asset` instance.
- * - `amount`:
+ * - `value`:
  *   - Can be a non-negative `bigint`.
  *   - Can be a non-negative `number` (transformed into `bigint`).
  *   - Can be a `string` (transformed into `bigint`).
@@ -20,21 +20,21 @@ import { Comparable, Marshallable } from '../interfaces';
  * @example
  * const allocation = {
  *   asset: new Asset({ type: AssetType.TON }),
- *   amount: 100n,
+ *   value: 100n,
  * };
  *
  * Allocation with an AssetSchema object:
  * @example
  * const allocation = {
  *   asset: { type: AssetType.JETTON, jettonMaster: "EQC6...validAddress" },
- *   amount: "1000",
+ *   value: "1000",
  * };
  *
- * Allocation with a number as the amount:
+ * Allocation with a number as the value:
  * @example
  * const allocation = {
  *   asset: { type: AssetType.EXTRA_CURRENCY, currencyId: 123 },
- *   amount: 5000,
+ *   value: 5000,
  * };
  *
  * ### Equivalent TypeScript Interface:
@@ -44,12 +44,12 @@ import { Comparable, Marshallable } from '../interfaces';
  *   | { type: AssetType.TON }
  *   | { type: AssetType.JETTON; jettonMaster: string }
  *   | { type: AssetType.EXTRA_CURRENCY; currencyId: number };
- *   amount: bigint;
+ *   value: bigint;
  * }
  */
 export const AllocationSchema = z.object({
   asset: z.union([z.instanceof(Asset), AssetSchema.transform((asset) => new Asset(asset))]),
-  amount: z.union([
+  value: z.union([
     z.bigint().nonnegative(),
     z
       .number()
@@ -60,17 +60,17 @@ export const AllocationSchema = z.object({
 });
 
 /**
- * Represents an allocation of a specific asset and amount.
+ * Represents an allocation of a specific asset and value.
  * Implements the Marshallable and Comparable interfaces.
  */
 export class Allocation implements z.infer<typeof AllocationSchema>, Marshallable, Comparable {
   asset: Asset;
-  amount: bigint;
+  value: bigint;
 
   constructor(params: z.input<typeof AllocationSchema>) {
     const parsed = AllocationSchema.parse(params);
     this.asset = parsed.asset;
-    this.amount = parsed.amount;
+    this.value = parsed.value;
   }
 
   /**
@@ -80,14 +80,14 @@ export class Allocation implements z.infer<typeof AllocationSchema>, Marshallabl
    *
    * @example
    * const allocations = Allocation.createAllocations([
-   *   { asset: Asset.ton(), amount: 100n },
-   *   { asset: Asset.jetton(Address.parse("EQC6...validAddress")), amount: 100n },
-   *   { asset: { type: AssetType.EXTRA_CURRENCY, currencyId: 123 }, amount: 100n },
+   *   { asset: Asset.ton(), value: 100n },
+   *   { asset: Asset.jetton(Address.parse("EQC6...validAddress")), value: 100n },
+   *   { asset: { type: AssetType.EXTRA_CURRENCY, currencyId: 123 }, value: 100n },
    * ])
    * expect(allocations.length).toBe(3)
    *
    * @example
-   * const allocations = Allocation.createAllocations({ asset: Asset.ton(), amount: 100n })
+   * const allocations = Allocation.createAllocations({ asset: Asset.ton(), value: 100n })
    * expect(allocations.length).toBe(1)
    */
   static createAllocations(input: z.input<typeof AllocationSchema> | z.input<typeof AllocationSchema>[]): Allocation[] {
@@ -111,7 +111,7 @@ export class Allocation implements z.infer<typeof AllocationSchema>, Marshallabl
   toJSON() {
     return {
       asset: this.asset.toJSON(),
-      amount: this.amount.toString(),
+      value: this.value.toString(),
     };
   }
 

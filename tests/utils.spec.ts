@@ -52,22 +52,22 @@ describe('Test Allocation Normalization', () => {
   const stton = Asset.jetton(sttonAddr);
 
   it('Should normalize allocations (expand 1 element to 3)', () => {
-    const alloc = new Allocation({ asset: Asset.ton(), amount: BigInt(100) });
+    const alloc = new Allocation({ asset: Asset.ton(), value: BigInt(100) });
     const target = [ton, tston, stton].sort((a, b) => a.compare(b));
     const normalized = normalize(alloc, target);
     const expected = [
-      new Allocation({ asset: ton, amount: 100n }),
-      new Allocation({ asset: tston, amount: 0n }),
-      new Allocation({ asset: stton, amount: 0n }),
+      new Allocation({ asset: ton, value: 100n }),
+      new Allocation({ asset: tston, value: 0n }),
+      new Allocation({ asset: stton, value: 0n }),
     ].sort((a, b) => a.compare(b));
     expect(normalized).toEqual(expected);
   });
 
   it('Should normalize allocations (3 elements to 3)', () => {
     const alloc = Allocation.createAllocations([
-      { asset: Asset.ton(), amount: BigInt(100) },
-      { asset: Asset.jetton(Address.parse('EQC98_qAmNEptUtPc7W6xdHh_ZHrBUFpw5Ft_IzNU20QAJav')), amount: BigInt(100) },
-      { asset: Asset.jetton(Address.parse('EQDNhy-nxYFgUqzfUzImBEP67JqsyMIcyk2S5_RwNNEYku0k')), amount: BigInt(100) },
+      { asset: Asset.ton(), value: BigInt(100) },
+      { asset: Asset.jetton(Address.parse('EQC98_qAmNEptUtPc7W6xdHh_ZHrBUFpw5Ft_IzNU20QAJav')), value: BigInt(100) },
+      { asset: Asset.jetton(Address.parse('EQDNhy-nxYFgUqzfUzImBEP67JqsyMIcyk2S5_RwNNEYku0k')), value: BigInt(100) },
     ]);
     const target = [ton, tston, stton].sort((a, b) => a.compare(b));
     const normalized = normalize(alloc, target);
