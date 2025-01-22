@@ -42,7 +42,7 @@ describe('RatePayload and SignedRate', () => {
 
     const rate = new RatePayload({ expiration, rates: tritonRates });
     const signature = await rate.sign(keypair.secretKey);
-    const verified = signVerify(rate.toCell().toBoc(), signature, keypair.publicKey);
+    const verified = signVerify(rate.toCell().hash(), signature, keypair.publicKey);
     expect(verified).toBe(true);
   });
 
