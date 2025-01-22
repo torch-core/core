@@ -85,7 +85,7 @@ export class RatePayload implements z.infer<typeof RatePayloadSchema>, Marshalla
    * expect(signature).toBeDefined()
    */
   async sign(secretKey: Buffer<ArrayBufferLike>): Promise<Buffer> {
-    return sign(this.toCell().toBoc(), secretKey);
+    return sign(this.toCell().hash(), secretKey);
   }
 
   /**
