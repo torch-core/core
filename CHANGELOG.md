@@ -1,5 +1,11 @@
 # @torch-finance/core
 
+## 1.3.1
+
+### Patch Changes
+
+- c371edb: Fix sign method in RatePayload, should use cell.hash() but not cell.toBOC()
+
 ## 1.3.0
 
 ### Minor Changes
