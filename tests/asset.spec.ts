@@ -72,11 +72,13 @@ describe('Asset', () => {
 
   it('Should convert asset between ID and fromID', () => {
     const jettonMaster = Address.parse('EQC98_qAmNEptUtPc7W6xdHh_ZHrBUFpw5Ft_IzNU20QAJav');
-    const original = Asset.jetton(jettonMaster);
-    const id = original.ID;
-    const transformed = Asset.fromID(id);
-    expect(transformed.ID).toEqual(original.ID);
-    expect(transformed.type).toEqual(original.type);
-    expect(transformed.jettonMaster?.toString()).toEqual(original.jettonMaster?.toString());
+    const originals = [Asset.ton(), Asset.jetton(jettonMaster), Asset.extraCurrency(123)];
+    const ids = originals.map((original) => original.ID);
+    const transformeds = ids.map((id) => Asset.fromID(id));
+    expect(transformeds.map((transformed) => transformed.ID)).toEqual(ids);
+    expect(transformeds.map((transformed) => transformed.type)).toEqual(originals.map((original) => original.type));
+    expect(transformeds.map((transformed) => transformed.jettonMaster?.toString())).toEqual(
+      originals.map((original) => original.jettonMaster?.toString()),
+    );
   });
 });

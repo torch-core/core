@@ -186,17 +186,19 @@ export class Asset implements Marshallable, Comparable, Cellable {
    */
   static fromID(id: string): Asset {
     const [type, value] = id.split(':', 2);
-    if (!type || !value) throw new Error('Invalid asset ID');
+    if (!type) throw new Error('Invalid asset type');
     const typeNumber = Number(type);
     switch (typeNumber) {
       case AssetType.TON:
         return Asset.ton();
       case AssetType.JETTON:
+        if (!value) throw new Error('Invalid asset value');
         return Asset.jetton(Address.parse(value));
       case AssetType.EXTRA_CURRENCY:
+        if (!value) throw new Error('Invalid asset value');
         return Asset.extraCurrency(Number(value));
       default:
-        throw new Error('Invalid asset ID');
+        throw new Error('Invalid asset type: ' + type);
     }
   }
 
