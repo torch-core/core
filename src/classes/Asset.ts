@@ -167,7 +167,7 @@ export class Asset implements Marshallable, Comparable, Cellable {
         return `${AssetType.TON}`;
       case AssetType.JETTON:
         if (!this.jettonMaster) throw new Error('Jetton master address is missing');
-        return `${AssetType.JETTON}:${this.jettonMaster!.toString()}`;
+        return `${AssetType.JETTON}:${this.jettonMaster!.toRawString()}`;
       case AssetType.EXTRA_CURRENCY:
         if (this.currencyId === undefined) throw new Error('Currency ID is missing');
         return `${AssetType.EXTRA_CURRENCY}:${this.currencyId!}`;
@@ -185,7 +185,8 @@ export class Asset implements Marshallable, Comparable, Cellable {
    * expect(asset.jettonMaster).toBe(Address.parse("EQC6...validAddress"))
    */
   static fromID(id: string): Asset {
-    const [type, value] = id.split(':', 2);
+    const [type, ...rest] = id.split(':');
+    const value = rest.join(':');
     if (!type) throw new Error('Invalid asset type');
     const typeNumber = Number(type);
     switch (typeNumber) {
@@ -266,7 +267,7 @@ export class Asset implements Marshallable, Comparable, Cellable {
       case AssetType.JETTON:
         return {
           type: this.type,
-          jettonMaster: this.jettonMaster!.toString(),
+          jettonMaster: this.jettonMaster!.toRawString(),
         };
       case AssetType.EXTRA_CURRENCY:
         return { type: this.type, currencyId: this.currencyId };

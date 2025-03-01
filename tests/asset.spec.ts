@@ -21,8 +21,12 @@ describe('Asset', () => {
       currencyId: 1,
     });
     expect(tonAsset.ID).toBe('0');
-    expect(jettonAsset1.ID).toBe('1:EQC98_qAmNEptUtPc7W6xdHh_ZHrBUFpw5Ft_IzNU20QAJav');
-    expect(jettonAsset2.ID).toBe('1:EQC98_qAmNEptUtPc7W6xdHh_ZHrBUFpw5Ft_IzNU20QAJav');
+    expect(jettonAsset1.ID).toBe(
+      `1:${Address.parse('EQC98_qAmNEptUtPc7W6xdHh_ZHrBUFpw5Ft_IzNU20QAJav').toRawString()}`,
+    );
+    expect(jettonAsset2.ID).toBe(
+      `1:${Address.parse('EQC98_qAmNEptUtPc7W6xdHh_ZHrBUFpw5Ft_IzNU20QAJav').toRawString()}`,
+    );
     expect(extraCurrencyAsset.ID).toBe('2:1');
   });
 
@@ -40,7 +44,7 @@ describe('Asset', () => {
     expect(asset).toBeDefined();
     expect(asset.type).toBe(AssetType.JETTON);
     expect(asset.jettonMaster).toBe(jettonAddr);
-    expect(asset.ID).toBe(`1:${tston}`);
+    expect(asset.ID).toBe(`1:${Address.parse(tston).toRawString()}`);
   });
 
   it('Should sort assets in correct order (ton < stton < tston)', () => {
