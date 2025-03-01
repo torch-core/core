@@ -1,5 +1,11 @@
 # @torch-finance/core
 
+## 1.3.3
+
+### Patch Changes
+
+- 84afc84: Change Asset jetton address to raw string
+
 ## 1.3.2
 
 ### Patch Changes
