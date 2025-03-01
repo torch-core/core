@@ -1,6 +1,6 @@
 {
   "name": "@torch-finance/core",
-  "version": "1.3.2",
+  "version": "1.3.3",
   "description": "Basic core classes for Torch Finance",
   "packageManager": "pnpm@10.0.0",
   "license": "MIT",
